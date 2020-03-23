@@ -21,7 +21,7 @@ SecretSchema.methods.encrypt = function encrypt (key, value, userToken) {
 }
 
 SecretSchema.statics.findAndDecrypt = function decrypt (key, userToken) {
-  return this.findOne({ key: hashSecretKey(key) })
+  return this.findByKey(key)
     .lean()
     .then(secret => verify(secret.value, jwtSecret + key + userToken))
     .then(decoded => {
@@ -33,6 +33,10 @@ SecretSchema.statics.findAndDecrypt = function decrypt (key, userToken) {
         value: decoded.value
       }
     })
+}
+
+SecretSchema.statics.findByKey = function decrypt (key) {
+  return this.findOne({ key: hashSecretKey(key) });
 }
 
 function verify (key, secret) {
