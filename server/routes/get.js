@@ -7,7 +7,7 @@ module.exports = function getSecret (req, res) {
     return res.status(400).end()
   }
 
-  return Secret.findAndDecrypt(body.key, body.token)
+  return Secret.findAndDecrypt(req.headers.tenant, body.key, body.token)
     .then(secret => {
       res.status(200).jsonp(secret).end()
     })
