@@ -9,7 +9,7 @@ module.exports = function getSecret (req, res) {
 
   return Secret.findAndDecrypt(req.headers.tenant, body.key, body.token)
     .then(secret => {
-      res.status(200).jsonp(secret).end()
+      res.status(200).json(secret).end()
     })
     .catch(() => {
       return res.status(400).end()
