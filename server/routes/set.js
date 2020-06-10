@@ -7,13 +7,13 @@ module.exports = function setSecret (req, res) {
     return res.status(400).end()
   }
 
-  Secret.findByKey(body.key)
+  Secret.findByKey(req.headers.tenant, body.key)
     .then(secret => secret || new Secret(), () => new Secret())
-    .then(secret => secret.encrypt(body.key, body.value, body.token))
+    .then(secret => secret.encrypt(req.headers.tenant, body.key, body.value, body.token))
     .then(() => {
-      return res.status(200).jsonp({ key: body.key }).end()
+      return res.status(200).json({ key: body.key }).end()
     })
     .catch((err) => {
-      return res.status(400).jsonp().end()
+      return res.status(400).json().end()
     })
 }
