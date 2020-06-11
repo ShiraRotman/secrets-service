@@ -1,7 +1,9 @@
 const mongoose = require('mongoose')
 const crypto = require('crypto')
 const { sha256 } = require('sha.js')
-const { jwtSecret } = require('../../config')
+const { secretKey } = require('../../config')
+
+const lv = new Buffer('0102030405060708', 'binary')
 
 // define the Secret model schema
 const SecretSchema = new mongoose.Schema({
@@ -19,8 +21,9 @@ const SecretSchema = new mongoose.Schema({
 SecretSchema.index({ tenant: 1, key: 1 }, { unique: true })
 
 SecretSchema.methods.encrypt = function (tenant, key, value, userToken) {
+  this.tenant = tenant;
   this.key = hashSecretKey(tenant + key)
-  this.value = encrypt({ key, value, userToken }, jwtSecret + key + userToken + tenant)
+  this.value = encrypt({ key, value, userToken }, secretKey + key + userToken + tenant)
 
   return this.save()
 }
@@ -28,7 +31,7 @@ SecretSchema.methods.encrypt = function (tenant, key, value, userToken) {
 SecretSchema.statics.findAndDecrypt = function findAndDecrypt (tenant, key, userToken) {
   return this.findByKey(tenant, key)
     .lean()
-    .then(secret => decrypt(secret.value, jwtSecret + key + userToken + tenant))
+    .then(secret => decrypt(secret.value, secretKey + key + userToken + tenant))
     .then(decoded => {
       if (!(decoded.key === key && decoded.userToken === userToken)) {
         return Promise.reject()
@@ -45,17 +48,24 @@ SecretSchema.statics.findByKey = function decrypt (tenant, key) {
 }
 
 function hashSecretKey (text) {
-  return new sha256().update(text + jwtSecret).digest('hex')
+  return new sha256().update(text + secretKey).digest('hex')
 }
 
 function encrypt (data, secret) {
-  const cipher = crypto.createCipheriv('aes256', secret, '0102030405060708')
+  const cipher = crypto.createCipheriv('aes256', getValidSecret(secret), lv)
   return cipher.update(JSON.stringify(data), 'utf8', 'hex') + cipher.final('hex')
 }
 
 function decrypt (encrypted, secret) {
-  const decipher = crypto.createDecipheriv('aes256', secret, '0102030405060708')
+  const decipher = crypto.createDecipheriv('aes256', getValidSecret(secret), lv)
   return JSON.parse(decipher.update(encrypted, 'hex', 'utf8') + decipher.final('utf8'))
+}
+
+function getValidSecret (secret) {
+  if (secret.length === 32) {
+    return secret
+  }
+  return crypto.createHash('sha256').update(secret).digest('base64').substr(0, 32)
 }
 
 module.exports = mongoose.model('Secret', SecretSchema)
