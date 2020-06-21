@@ -1,11 +1,12 @@
 {
-  "name": "secrets-service",
+  "name": "@greenpress/secrets",
   "version": "1.0.0",
   "description": "manage encrypted secrets",
   "keywords": [
+    "greenpress",
     "express",
-    "mongoose",
-    "es6"
+    "mongodb",
+    "secrets manager"
   ],
   "engines": {
     "npm": ">=5",
@@ -14,7 +15,11 @@
   "scripts": {
     "start": "node --use_strict index.js"
   },
-  "author": "David Meir-Levy",
+  "main": "index.js",
+  "bin": {
+    "greenpress-serets": "index.js"
+  },
+  "author": "David Meir-Levy <davidmeirlevy@gmail.com>",
   "license": "MIT",
   "dependencies": {
     "axios": "^0.19.0",
@@ -25,5 +30,16 @@
     "mongoose": "^5.7.5",
     "morgan": "^1.9.0",
     "sha.js": "^2.4.11"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "bugs": {
+    "url": "https://github.com/greenpress/secrets-service/issues"
+  },
+  "homepage": "https://github.com/greenpress/secrets-service#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/greenpress/secrets-service.git"
   }
 }
