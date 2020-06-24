@@ -4,7 +4,7 @@ module.exports = function getSecret (req, res) {
   const body = req.body || {}
 
   if (!(body.key && body.token)) {
-    return res.status(400).end()
+    return res.status(400).json({ message: 'you are not authorized' }).end()
   }
 
   return Secret.findAndDecrypt(req.headers.tenant, body.key, body.token)
