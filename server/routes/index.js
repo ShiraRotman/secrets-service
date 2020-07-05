@@ -1,11 +1,8 @@
-function routes (app) {
-  const internalCheck = require('../middleware/internal-call-check')
+const app = require('@greenpress/api-kit').app()
+const internalCheck = require('../middleware/internal-call-check')
 
-  app.use(internalCheck)
+app.use(internalCheck)
 
-  app
-    .post('/api/secrets/get', require('./get'))
-    .post('/api/secrets/set', require('./set'))
-}
-
-module.exports = routes
+app
+  .post('/api/secrets/get', require('../controllers/get'))
+  .post('/api/secrets/set', require('../controllers/set'))

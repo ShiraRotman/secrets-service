@@ -1,6 +1,6 @@
 {
   "name": "@greenpress/secrets",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "manage encrypted secrets",
   "keywords": [
     "greenpress",
@@ -22,13 +22,8 @@
   "author": "David Meir-Levy <davidmeirlevy@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "axios": "^0.19.0",
-    "body-parser": "^1.17.2",
-    "cors": "^2.8.4",
-    "express": "^4.15.3",
-    "jsonwebtoken": "^8.5.1",
+    "@greenpress/api-kit": "0.0.1",
     "mongoose": "^5.7.5",
-    "morgan": "^1.9.0",
     "sha.js": "^2.4.11"
   },
   "publishConfig": {

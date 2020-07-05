@@ -1,26 +1,12 @@
-const express = require('express')
-const cors = require('cors')
-const bodyParser = require('body-parser')
-const morgan = require('morgan')
-const config = require('./config')
-const routes = require('./server/routes')
+const { mongoUri } = require('./config')
 
 // connect to the database and load models
-require('./server/models').connect(config.mongoUri)
+require('./server/models').connect(mongoUri)
 
-const app = express()
-app.use(morgan('combined'))
-app.use(cors())
+require('./server/routes')
 
-// tell the app to parse HTTP body messages
-app.use(bodyParser.json())
+require('@greenpress/api-kit')
+  .start('Assets Service',
+    process.env.PORT || 9002,
+    process.env.IP || '127.0.0.1')
 
-routes(app)
-
-app.set('port', (process.env.PORT || 9002))
-app.set('ip', (process.env.IP || '127.0.0.1'))
-
-// start the server
-app.listen(app.get('port'), app.get('ip'), () => {
-  console.log(`Secrets Server is running on port ${app.get('port')}`)
-})

@@ -1,4 +1,4 @@
-const Secret = require('mongoose').model('Secret')
+const Secret = require('../models/secrets')
 
 module.exports = function getSecret (req, res) {
   const body = req.body || {}
