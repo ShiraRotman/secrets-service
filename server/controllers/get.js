@@ -1,4 +1,5 @@
-const Secret = require('../models/secrets')
+const persistImpl=require("../models/mongo-impl");
+const Secret = require('../models/secrets'),secret=new Secret(persistImpl);
 
 module.exports = function getSecret (req, res) {
   const body = req.body || {}
@@ -7,11 +8,11 @@ module.exports = function getSecret (req, res) {
     return res.status(400).json({ message: 'you are not authorized' }).end()
   }
 
-  return Secret.findAndDecrypt(req.headers.tenant, body.key, body.token)
-    .then(secret => {
-      res.status(200).json(secret).end()
+  return secret.findAndDecrypt(req.headers.tenant, body.key, body.token)
+    .then(result => {
+      res.status(200).json(result).end()
     })
     .catch(() => {
-      return res.status(400).end()
+      return res.status(400).end() //TODO: Send 404 if the key was not found
     })
 }

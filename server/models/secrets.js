@@ -1,71 +1,68 @@
-const mongoose = require('mongoose')
-const crypto = require('crypto')
-const { sha256 } = require('sha.js')
-const { secretKey } = require('../../config')
+const crypto=require("crypto");
+const config=require('../../config');
 
-const lv = new Buffer('0102030405060708', 'binary')
+module.exports=(function()
+{
+	//TODO: The IV should be random! Use crypto.randomBytes!
+	const lv = new Buffer('0102030405060708', 'binary');
+	
+	function Secret(persistImpl)
+	{
+		if (!persistImpl)
+			throw new ReferenceError("A persistence implementation must be supplied!");
+		else if ((!persistImpl.persist)||(!persistImpl.findByKey))
+			throw new TypeError("The persistence object must implement save and findOne methods!");
+		
+		this.persistImpl=persistImpl;
+		if (persistImpl.connect) persistImpl.connect(config.persistenceUri);
+	}
+	
+	Secret.prototype.encrypt = function (tenant, key, value, userToken) {
+		const hashedKey=hashSecretKey(tenant + key);
+		const encryptedValue=encrypt({ key, value, userToken }, config.secretKey + 
+				key + userToken + tenant);
+		return this.persistImpl.persist(tenant,hashedKey,encryptedValue);
+	};
+	
+	Secret.prototype.findAndDecrypt = function (tenant, key, userToken) 
+	{
+		return new Promise((resolve,reject) => 
+		{
+			this.persistImpl.findByKey(tenant, hashSecretKey(tenant + key)).
+					then(secret => decrypt(secret.value, config.secretKey + key + 
+					userToken + tenant)).then(decoded => 
+			{
+				if (!(decoded.key === key && decoded.userToken === userToken)) {
+					reject();
+				}
+				return resolve({
+					key,
+					value: decoded.value
+				});
+			}).catch(err => reject(err));
+		});
+	};
+	
+	function hashSecretKey (text) {
+		return crypto.createHash("sha256").update(text + config.secretKey).digest("hex");
+	}
 
-// define the Secret model schema
-const SecretSchema = new mongoose.Schema({
-  tenant: {
-    type: String,
-    required: true,
-  },
-  key: {
-    type: String,
-    required: true,
-  },
-  value: String,
-})
+	function encrypt (data, secret) {
+		const cipher = crypto.createCipheriv('aes256', getValidSecret(secret), lv)
+		return cipher.update(JSON.stringify(data), 'utf8', 'hex') + cipher.final('hex')
+	}
 
-SecretSchema.index({ tenant: 1, key: 1 }, { unique: true })
-
-SecretSchema.methods.encrypt = function (tenant, key, value, userToken) {
-  this.tenant = tenant;
-  this.key = hashSecretKey(tenant + key)
-  this.value = encrypt({ key, value, userToken }, secretKey + key + userToken + tenant)
-
-  return this.save()
-}
-
-SecretSchema.statics.findAndDecrypt = function findAndDecrypt (tenant, key, userToken) {
-  return this.findByKey(tenant, key)
-    .lean()
-    .then(secret => decrypt(secret.value, secretKey + key + userToken + tenant))
-    .then(decoded => {
-      if (!(decoded.key === key && decoded.userToken === userToken)) {
-        return Promise.reject()
-      }
-      return {
-        key,
-        value: decoded.value
-      }
-    })
-}
-
-SecretSchema.statics.findByKey = function decrypt (tenant, key) {
-  return this.findOne({ key: hashSecretKey(tenant + key), tenant })
-}
-
-function hashSecretKey (text) {
-  return new sha256().update(text + secretKey).digest('hex')
-}
-
-function encrypt (data, secret) {
-  const cipher = crypto.createCipheriv('aes256', getValidSecret(secret), lv)
-  return cipher.update(JSON.stringify(data), 'utf8', 'hex') + cipher.final('hex')
-}
-
-function decrypt (encrypted, secret) {
-  const decipher = crypto.createDecipheriv('aes256', getValidSecret(secret), lv)
-  return JSON.parse(decipher.update(encrypted, 'hex', 'utf8') + decipher.final('utf8'))
-}
-
-function getValidSecret (secret) {
-  if (secret.length === 32) {
-    return secret
-  }
-  return crypto.createHash('sha256').update(secret).digest('base64').substr(0, 32)
-}
-
-module.exports = mongoose.model('Secret', SecretSchema)
+	function decrypt (encrypted, secret) {
+		const decipher = crypto.createDecipheriv('aes256', getValidSecret(secret), lv)
+		return JSON.parse(decipher.update(encrypted, 'hex', 'utf8') + decipher.final('utf8'))
+	}
+	
+	function getValidSecret (secret) {
+		if (secret.length === 32) {
+			return secret
+		}
+		return crypto.createHash('sha256').update(secret).digest('base64').substr(0, 32)
+	}
+	
+	return Secret;
+})();

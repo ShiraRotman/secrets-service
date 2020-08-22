@@ -1,12 +1,8 @@
-const { mongoUri } = require('./config')
-
-// connect to the database and load models
-require('./server/models').connect(mongoUri)
 
 require('./server/routes')
 
 require('@greenpress/api-kit')
-  .start('Assets Service',
+  .start('Secrets Service',
     process.env.PORT || 9002,
     process.env.IP || '127.0.0.1')
 
