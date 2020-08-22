@@ -1,28 +1,26 @@
-const crypto=require("crypto");
+const crypto = require('crypto');
 const persistenceImpl = require('./mongo-impl');
-const config=require('../../config');
+const config = require('../../config');
 
-const Secret=(function()
-{
+const Secret = (function() {
 	//TODO: The IV should be random! Use crypto.randomBytes!
 	const lv = new Buffer('0102030405060708', 'binary');
 	
-	function Secret(persistImpl)
-	{
+	function Secret(persistImpl) {
 		if (!persistImpl)
-			throw new ReferenceError("A persistence implementation must be supplied!");
-		else if ((!persistImpl.persist)||(!persistImpl.findByKey))
-			throw new TypeError("The persistence object must implement save and findOne methods!");
+			throw new ReferenceError('A persistence implementation must be supplied!');
+		else if ((!persistImpl.persist) || (!persistImpl.findByKey))
+			throw new TypeError('The persistence object must implement save and findOne methods!');
 		
-		this.persistImpl=persistImpl;
+		this.persistImpl = persistImpl;
 		if (persistImpl.connect) persistImpl.connect(config.persistenceUri);
 	}
 	
 	Secret.prototype.encrypt = function (tenant, key, value, userToken) {
-		const hashedKey=hashSecretKey(tenant + key);
-		const encryptedValue=encrypt({ key, value, userToken }, config.secretKey + 
+		const hashedKey = hashSecretKey(tenant + key);
+		const encryptedValue = encrypt({ key, value, userToken }, config.secretKey + 
 				key + userToken + tenant);
-		return this.persistImpl.persist(tenant,hashedKey,encryptedValue);
+		return this.persistImpl.persist(tenant, hashedKey, encryptedValue);
 	};
 	
 	Secret.prototype.findAndDecrypt = function (tenant, key, userToken) 
@@ -31,8 +29,7 @@ const Secret=(function()
 		{
 			this.persistImpl.findByKey(tenant, hashSecretKey(tenant + key)).
 					then(secret => decrypt(secret.value, config.secretKey + key + 
-					userToken + tenant)).then(decoded => 
-			{
+					userToken + tenant)).then(decoded => {
 				if (!(decoded.key === key && decoded.userToken === userToken)) {
 					reject();
 				}
@@ -45,7 +42,7 @@ const Secret=(function()
 	};
 	
 	function hashSecretKey (text) {
-		return crypto.createHash("sha256").update(text + config.secretKey).digest("hex");
+		return crypto.createHash('sha256').update(text + config.secretKey).digest('hex');
 	}
 
 	function encrypt (data, secret) {
