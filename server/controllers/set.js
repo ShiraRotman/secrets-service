@@ -1,5 +1,4 @@
-const persistImpl=require("../models/mongo-impl");
-const Secret = require('../models/secrets'),secret=new Secret(persistImpl);
+const Secret = require('../models/secrets');
 
 module.exports = function setSecret (req, res) {
   const body = req.body || {}
@@ -8,7 +7,7 @@ module.exports = function setSecret (req, res) {
     return res.status(400).end()
   }
 
-    secret.encrypt(req.headers.tenant, body.key, body.value, body.token)
+    Secret.encrypt(req.headers.tenant, body.key, body.value, body.token)
 	.then(() => {
       return res.status(200).json({ key: body.key }).end()
     })

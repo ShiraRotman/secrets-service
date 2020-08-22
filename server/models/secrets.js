@@ -1,7 +1,8 @@
 const crypto=require("crypto");
+const persistenceImpl = require('./mongo-impl');
 const config=require('../../config');
 
-module.exports=(function()
+const Secret=(function()
 {
 	//TODO: The IV should be random! Use crypto.randomBytes!
 	const lv = new Buffer('0102030405060708', 'binary');
@@ -66,3 +67,5 @@ module.exports=(function()
 	
 	return Secret;
 })();
+
+module.exports = new Secret(persistenceImpl);
