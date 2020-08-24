@@ -1,4 +1,4 @@
-const Secret = require('../models/secrets');
+const Secret = require('../services/index');
 
 module.exports = function setSecret (req, res) {
   const body = req.body || {}
